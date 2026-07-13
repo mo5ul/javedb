@@ -1,0 +1,12 @@
+#Maven build output
+target/
+
+#VSC settings
+.vscode/
+
+#log files
+*.log
+
+#OS files
+.DS_Store
+Thumbs.db
