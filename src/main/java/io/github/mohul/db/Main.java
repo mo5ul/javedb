@@ -1,9 +1,12 @@
 package io.github.mohul.db;
 
-public class Main {
+public final class Main {
     public static void main(String[] args){
-        JaveDB db = new JaveDB("data/");
-        System.out.println("Database created successfully");
-        db.put(null, "Mohul".getBytes());
+        JaveDB db = new JaveDB("data");
+        db.put("name".getBytes(), "Mohul".getBytes());
+        byte[] value = db.get("name".getBytes());
+        System.out.println(new String(value));
+        db.delete("name".getBytes());
+        System.out.println(db.get("name".getBytes()));
     }
 }
