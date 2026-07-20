@@ -32,4 +32,7 @@ public final class MemTable {
             throw new IllegalArgumentException("Key cannot be empty.");
         }
     }
+    public Iterable<Entry> entries(){
+        return entries.values();
+    }
 }

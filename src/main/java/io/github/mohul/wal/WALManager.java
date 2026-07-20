@@ -15,24 +15,13 @@ public final class WALManager {
     private static final byte PUT = 1;
     private static final byte DELETE = 2;
     private final Path walPath;
-    private final DataOutputStream output;
+    private DataOutputStream output;
     public WALManager(Path walPath) throws IOException {
         if (walPath == null) {
             throw new IllegalArgumentException("WAL path cannot be null.");
         }
         this.walPath = walPath;
-        if (Files.notExists(walPath)) {
-            Files.createFile(walPath);
-        }
-        this.output = new DataOutputStream(
-        new BufferedOutputStream(
-                Files.newOutputStream(
-                        walPath,
-                        StandardOpenOption.CREATE,
-                        StandardOpenOption.APPEND
-                )
-        )
-);
+        openOutput(); 
     }
     public void append(WALRecord record) throws IOException {
         if (record == null) {
@@ -90,5 +79,23 @@ public final class WALManager {
     }
     public void close() throws IOException {
         output.close();
+    }
+    private void openOutput() throws IOException {
+    output = new DataOutputStream(
+            new BufferedOutputStream(
+                    Files.newOutputStream(
+                            walPath,
+                            StandardOpenOption.CREATE,
+                            StandardOpenOption.APPEND
+                    )
+                )
+        );
+    }
+    public void reset() throws IOException {
+        output.close();
+
+        Files.deleteIfExists(walPath);
+
+        openOutput();
     }
 }
