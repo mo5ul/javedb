@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 public final class SSTableReader {
     private static final int MAGIC_NUMBER = 0x4A444253;
-    private static final int VERSION = 1;
     private static final int FOOTER_MAGIC = 0x464F4F54;
     private static final ByteArrayComparator COMPARATOR = new ByteArrayComparator();
     private final Path sstablePath;
@@ -67,6 +66,19 @@ public final class SSTableReader {
                 return null;
             }
             return value;
+        }
+    }
+    public int getEntryCount() throws IOException {
+        try(RandomAccessFile file=new RandomAccessFile(sstablePath.toFile(),"r")){
+            if(file.length()<12){
+                throw new IOException("Invalid SSTable.");
+            }
+            int magic=file.readInt();
+            if(magic!=MAGIC_NUMBER){
+                throw new IOException("Invalid SSTable.");
+            }
+            file.readInt();
+            return file.readInt();
         }
     }
 }

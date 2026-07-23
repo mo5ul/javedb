@@ -4,6 +4,8 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 public final class MemTable {
     private final NavigableMap<byte[], Entry> entries;
+    private static final int ENTRY_OVERHEAD = 32;
+    private long estimatedSizeInBytes;
     public MemTable() {
         this.entries = new TreeMap<>(new ByteArrayComparator());
     }
@@ -11,7 +13,13 @@ public final class MemTable {
         if (entry == null) {
             throw new IllegalArgumentException("Entry cannot be null.");
         }
-        entries.put(entry.getKey(), entry);
+        Entry previous = entries.put(entry.getKey(), entry);
+        if(previous==null){
+            estimatedSizeInBytes += estimateEntrySize(entry);
+        } else {
+            estimatedSizeInBytes -= estimateEntrySize(previous);
+            estimatedSizeInBytes += estimateEntrySize(entry);
+        }
     }
     public Entry get(byte[] key) {
         validateKey(key);
@@ -19,7 +27,10 @@ public final class MemTable {
     }
     public void delete(byte[] key) {
         validateKey(key);
-        entries.remove(key);
+        Entry removed = entries.remove(key);
+        if(removed != null){
+            estimatedSizeInBytes -= estimateEntrySize(removed);
+        }
     }
     public int size() {
         return entries.size();
@@ -34,5 +45,13 @@ public final class MemTable {
     }
     public Iterable<Entry> entries(){
         return entries.values();
+    }
+    public long getEstimatedSizeInBytes() {
+        return estimatedSizeInBytes;
+    }
+    private long estimateEntrySize(Entry entry) {
+        return ENTRY_OVERHEAD
+                + entry.getKey().length
+                + entry.getValue().length;
     }
 }
