@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
-
 import io.github.mohul.observability.event.EngineEventLog;
 import io.github.mohul.observability.health.HealthReport;
 import io.github.mohul.observability.health.HealthStatus;
@@ -94,41 +93,55 @@ public final class JaveDB {
     public void put(byte[] key, byte[] value) throws IOException {
         validateKey(key);
         validateValue(value);
-        WALRecord record = new WALRecord(OperationType.PUT, key, value);
+        long start=System.nanoTime();
+        WALRecord record=new WALRecord(OperationType.PUT,key,value);
         walManager.append(record);
-        Entry entry = new Entry(key, value);
+        Entry entry=new Entry(key,value);
         memTable.put(entry);
         runtimeStatistics.incrementWriteCount();
         updateStorageStatistics();
-        eventLog.addEvent("PUT", "Key inserted.");
-        if (options.isAutoFlushEnabled() && memTable.getEstimatedSizeInBytes() >= options.getMemTableMaxSizeBytes()) {
+        eventLog.addEvent("PUT","Key inserted.");
+        if(options.isAutoFlushEnabled() &&
+                memTable.getEstimatedSizeInBytes()>=options.getMemTableMaxSizeBytes()){
             flush();
         }
+        long elapsed=System.nanoTime()-start;
+        runtimeStatistics.recordWriteTime(elapsed);
     }
     public byte[] get(byte[] key) throws IOException {
         validateKey(key);
+        long start=System.nanoTime();
         runtimeStatistics.incrementReadCount();
-        Entry entry = memTable.get(key);
-        if (entry != null) {
-            return entry.getValue();
-        }
-        for (int i = sstablePaths.size() - 1; i >= 0; i--) {
-            SSTableReader reader = new SSTableReader(sstablePaths.get(i));
-            byte[] value = reader.get(key);
-            if (value != null) {
-                return value;
+        byte[] result=null;
+        Entry entry=memTable.get(key);
+        if(entry!=null){
+            result=entry.getValue();
+        }else{
+            for(int i=sstablePaths.size()-1;i>=0;i--){
+                SSTableReader reader=new SSTableReader(sstablePaths.get(i));
+                byte[] value=reader.get(key);
+                if(value!=null){
+                    result=value;
+                    break;
+                }
             }
         }
-        return null;
+        long elapsed=System.nanoTime()-start;
+        runtimeStatistics.recordReadTime(elapsed);
+        return result;
     }
-    public void delete(byte[] key) throws IOException {
+    public boolean delete(byte[] key) throws IOException {
         validateKey(key);
+        if(get(key)==null){
+            return false;
+        }
         runtimeStatistics.incrementDeleteCount();
-        WALRecord record = new WALRecord(OperationType.DELETE, key, null);
+        WALRecord record=new WALRecord(OperationType.DELETE,key,null);
         walManager.append(record);
         memTable.delete(key);
         updateStorageStatistics();
-        eventLog.addEvent("DELETE", "Key deleted.");
+        eventLog.addEvent("DELETE","Key deleted.");
+        return true;
     }
     public void flush() throws IOException {
         Path sstablePath = databasePath.resolve(String.format("%06d.jdbs", nextSSTableId++));
@@ -286,7 +299,7 @@ public final class JaveDB {
     public void setMemTableMaxSizeBytes(long size) throws IOException{
         options.setMemTableMaxSizeBytes(size);
         eventLog.addEvent("SETTINGS","MemTable limit changed to "+size+" bytes.");
-        if(memTable.getEstimatedSizeInBytes()>=options.getMemTableMaxSizeBytes()){
+        if(memTable.getEstimatedSizeInBytes()>options.getMemTableMaxSizeBytes()){
             flush();
         }
     }
