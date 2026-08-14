@@ -27,9 +27,13 @@ public final class MemTable {
     }
     public void delete(byte[] key) {
         validateKey(key);
-        Entry removed = entries.remove(key);
-        if(removed != null){
-            estimatedSizeInBytes -= estimateEntrySize(removed);
+        Entry tombstone = new Entry(key, null, true);
+        Entry previous = entries.put(key, tombstone);
+        if (previous == null) {
+            estimatedSizeInBytes += estimateEntrySize(tombstone);
+        } else {
+            estimatedSizeInBytes -= estimateEntrySize(previous);
+            estimatedSizeInBytes += estimateEntrySize(tombstone);
         }
     }
     public int size() {
@@ -52,6 +56,6 @@ public final class MemTable {
     private long estimateEntrySize(Entry entry) {
         return ENTRY_OVERHEAD
                 + entry.getKey().length
-                + entry.getValue().length;
+                + (entry.isTombstone() ? 0 : entry.getValue().length);
     }
 }

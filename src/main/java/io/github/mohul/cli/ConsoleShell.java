@@ -3,7 +3,7 @@ import io.github.mohul.db.JaveDB;
 import io.github.mohul.observability.event.EngineEvent;
 import io.github.mohul.observability.info.DatabaseSummary;
 import io.github.mohul.observability.statistics.RuntimeStatistics;
-
+import io.github.mohul.observability.storage.CompactionResult;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -388,7 +388,8 @@ public class ConsoleShell{
             System.out.println("2. Get Entry");
             System.out.println("3. Delete Entry");
             System.out.println("4. Flush MemTable");
-            System.out.println("5. Back");
+            System.out.println("5. Compact SSTables");
+            System.out.println("6. Back");
             System.out.println();
             System.out.print("Select Option: ");
             String option = scanner.nextLine().trim();
@@ -406,6 +407,9 @@ public class ConsoleShell{
                     flushMemTable();
                     break;
                 case "5":
+                    compactSSTables();
+                    break;
+                case "6":
                     return;
                 default:
                     System.out.println();
@@ -488,6 +492,34 @@ public class ConsoleShell{
         }catch(Exception e){
             System.out.println();
             System.out.println("Failed to flush MemTable!");
+            System.out.println(e.getMessage());
+        }
+        pause();
+    }
+    private void compactSSTables() {
+        try {
+            System.out.println();
+            System.out.println("Compact SSTables");
+            System.out.println("------------------------------------------------------------");
+            CompactionResult result = database.compact();
+            System.out.println();
+            System.out.println("Compaction completed successfully!");
+            System.out.println();
+            System.out.printf("%-22s : %d%n",
+                    "SSTables Merged",
+                    result.getMergedSSTables());
+            System.out.printf("%-22s : %s%n",
+                    "New SSTable",
+                    result.getNewSSTable());
+            System.out.printf("%-22s : %d%n",
+                    "Live Records",
+                    result.getLiveRecords());
+            System.out.printf("%-22s : %d%n",
+                    "Tombstones Removed",
+                    result.getTombstonesRemoved());
+        } catch (Exception e) {
+            System.out.println();
+            System.out.println("Failed to compact SSTables!");
             System.out.println(e.getMessage());
         }
         pause();

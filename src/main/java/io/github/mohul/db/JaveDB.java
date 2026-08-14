@@ -26,6 +26,7 @@ import io.github.mohul.observability.info.DatabaseInfo;
 import io.github.mohul.observability.info.DatabaseSummary;
 import io.github.mohul.observability.statistics.RuntimeStatistics;
 import io.github.mohul.observability.statistics.StorageStatistics;
+import io.github.mohul.observability.storage.CompactionResult;
 import io.github.mohul.observability.storage.EntryInfo;
 import io.github.mohul.observability.storage.MemTableInfo;
 import io.github.mohul.observability.storage.SSTableInfo;
@@ -38,6 +39,7 @@ public final class JaveDB {
     private final List<Path> sstablePaths = new ArrayList<>();
     private final JaveDBOptions options;
     private int nextSSTableId = 1;
+    private static final int AUTO_COMPACTION_THRESHOLD = 4;
     private final RuntimeStatistics runtimeStatistics;
     private final DatabaseInfo databaseInfo;
     private final EngineEventLog eventLog;
@@ -110,23 +112,30 @@ public final class JaveDB {
     }
     public byte[] get(byte[] key) throws IOException {
         validateKey(key);
-        long start=System.nanoTime();
+        long start = System.nanoTime();
         runtimeStatistics.incrementReadCount();
-        byte[] result=null;
-        Entry entry=memTable.get(key);
-        if(entry!=null){
-            result=entry.getValue();
-        }else{
-            for(int i=sstablePaths.size()-1;i>=0;i--){
-                SSTableReader reader=new SSTableReader(sstablePaths.get(i));
-                byte[] value=reader.get(key);
-                if(value!=null){
-                    result=value;
+        byte[] result = null;
+        Entry entry = memTable.get(key);
+        if (entry != null) {
+            if (!entry.isTombstone()) {
+                result = entry.getValue();
+            }
+        } else {
+            for (int i = sstablePaths.size() - 1; i >= 0; i--) {
+                SSTableReader reader = new SSTableReader(sstablePaths.get(i));
+                SSTableReader.Record record = reader.getRecord(key);
+                if (record == null) {
+                    continue;
+                }
+                if (record.isTombstone()) {
+                    result = null;
                     break;
                 }
+                result = record.getValue();
+                break;
             }
         }
-        long elapsed=System.nanoTime()-start;
+        long elapsed = System.nanoTime() - start;
         runtimeStatistics.recordReadTime(elapsed);
         return result;
     }
@@ -153,6 +162,48 @@ public final class JaveDB {
         runtimeStatistics.incrementFlushCount();
         updateStorageStatistics();
         eventLog.addEvent("FLUSH", "MemTable flushed to SSTable.");
+        if(sstablePaths.size() >= AUTO_COMPACTION_THRESHOLD){
+            compact();
+        }
+    }
+    public CompactionResult compact() throws IOException{
+        if(sstablePaths.isEmpty()){
+            return new CompactionResult(0,0,0,"-");
+        }
+        int mergedSSTables = sstablePaths.size();
+        int tombstonesRemoved = 0;
+        java.util.NavigableMap<byte[], SSTableReader.Record> latestRecords = new java.util.TreeMap<>(new io.github.mohul.util.ByteArrayComparator());
+        for (Path path : sstablePaths){
+            SSTableReader reader = new SSTableReader(path);
+            for(SSTableReader.Record record : reader.readAll()){
+                latestRecords.put(record.getKey(), record);
+            }
+        }
+        MemTable compactedMemTable = new MemTable();
+        for(SSTableReader.Record record : latestRecords.values()){
+            if(record.isTombstone()){
+                tombstonesRemoved++;
+                continue;
+            }
+            compactedMemTable.put(new Entry(record.getKey(),record.getValue()));
+        }
+        Path compactedPath = databasePath.resolve(String.format("%06d.jdbs", nextSSTableId++));
+        if(compactedMemTable.size()>0){
+            SSTableWriter writer = new SSTableWriter(compactedPath);
+            writer.write(compactedMemTable);
+        }else{
+            compactedPath = null;
+        }
+        for (Path path : sstablePaths){
+            Files.deleteIfExists(path);
+        }
+        sstablePaths.clear();
+        if (compactedPath != null){
+            sstablePaths.add(compactedPath);
+        }
+        updateStorageStatistics();
+        eventLog.addEvent("COMPACTION", "Merged " + mergedSSTables + " SSTables into " + (compactedPath == null ? "none" : compactedPath.getFileName()));
+        return new CompactionResult(mergedSSTables, compactedMemTable.size(), tombstonesRemoved, compactedPath == null ? "-" : compactedPath.getFileName().toString());
     }
     public void close() throws IOException {
         if (!open) {

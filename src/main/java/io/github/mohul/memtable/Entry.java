@@ -1,24 +1,32 @@
 package io.github.mohul.memtable;
-public final class Entry{
+public final class Entry {
     private final byte[] key;
     private final byte[] value;
-    public Entry(byte[] key, byte[] value){
-    if(key==null){
-        throw new IllegalArgumentException("Key cannot be null.");
+    private final boolean tombstone;
+    public Entry(byte[] key, byte[] value) {
+        this(key, value, false);
     }
-    if(key.length==0){
-        throw new IllegalArgumentException("Key cannot be empty.");
+    public Entry(byte[] key, byte[] value, boolean tombstone) {
+        if (key == null) {
+            throw new IllegalArgumentException("Key cannot be null.");
+        }
+        if (key.length == 0) {
+            throw new IllegalArgumentException("Key cannot be empty.");
+        }
+        if (!tombstone && value == null) {
+            throw new IllegalArgumentException("Value cannot be null.");
+        }
+        this.key = key.clone();
+        this.value = value == null ? null : value.clone();
+        this.tombstone = tombstone;
     }
-    if(value==null){
-        throw new IllegalArgumentException("Value cannot be null.");
+    public byte[] getKey() {
+        return key.clone();
     }
-    this.key=key.clone();
-    this.value=value.clone();
-}
-public byte[] getKey(){
-    return key.clone();
-}
-public byte[] getValue(){
-    return value.clone();
-}
+    public byte[] getValue() {
+        return value == null ? null : value.clone();
+    }
+    public boolean isTombstone() {
+        return tombstone;
+    }
 }
