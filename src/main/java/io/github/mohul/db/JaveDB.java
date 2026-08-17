@@ -10,13 +10,17 @@ import io.github.mohul.wal.OperationType;
 import io.github.mohul.wal.WALManager;
 import io.github.mohul.wal.WALRecord;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 import io.github.mohul.observability.event.EngineEventLog;
 import io.github.mohul.observability.health.HealthReport;
@@ -201,6 +205,7 @@ public final class JaveDB {
         if (compactedPath != null){
             sstablePaths.add(compactedPath);
         }
+        runtimeStatistics.incrementCompactionCount();
         updateStorageStatistics();
         eventLog.addEvent("COMPACTION", "Merged " + mergedSSTables + " SSTables into " + (compactedPath == null ? "none" : compactedPath.getFileName()));
         return new CompactionResult(mergedSSTables, compactedMemTable.size(), tombstonesRemoved, compactedPath == null ? "-" : compactedPath.getFileName().toString());
@@ -238,6 +243,31 @@ public final class JaveDB {
     }
     public RuntimeStatistics getRuntimeStatistics() {
         return runtimeStatistics;
+    }
+    public List<String> listKeys() throws IOException{
+        Map<String, Boolean> keyMap = new LinkedHashMap<>();
+        for (Path path : sstablePaths){
+            SSTableReader reader = new SSTableReader(path);
+            for (SSTableReader.Record record : reader.readAll()){
+                String key = new String (record.getKey(),StandardCharsets.UTF_8);
+                if(record.isTombstone()){
+                    keyMap.remove(key);
+                } else {
+                    keyMap.put(key, true);
+                }
+            }
+        }
+        for (Entry entry : memTable.entries()){
+            String key = new String(entry.getKey(), StandardCharsets.UTF_8);
+            if(entry.isTombstone()){
+                keyMap.remove(key);
+            } else {
+                keyMap.put(key, true);
+            }
+        }
+        List<String> keys = new ArrayList<>(keyMap.keySet());
+        Collections.sort(keys);
+        return keys;
     }
     public DatabaseInfo getDatabaseInfo() {
         return databaseInfo;

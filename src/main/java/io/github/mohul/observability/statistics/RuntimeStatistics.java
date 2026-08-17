@@ -11,6 +11,7 @@
         private long slowestReadTimeNanos;
         private long fastestWriteTimeNanos = Long.MAX_VALUE;
         private long slowestWriteTimeNanos;
+        private long compactionCount;
         public RuntimeStatistics(){
             this.startTime = System.currentTimeMillis();
         }
@@ -98,5 +99,11 @@
                 return 0;
             }
             return totalWriteTimeNanos/writeCount;
+        }
+        public void incrementCompactionCount() {
+            compactionCount++;
+        }
+        public long getCompactionCount() {
+            return compactionCount;
         }
     }

@@ -21,6 +21,7 @@ import io.github.mohul.observability.storage.WALInfo;
 import io.github.mohul.observability.storage.WALRecordInfo;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import io.github.mohul.benchmark.PerformanceSuite;
 public class ConsoleShell{
     private final Scanner scanner = new Scanner(System.in);
     private JaveDB database;
@@ -56,9 +57,12 @@ public class ConsoleShell{
                     settings();
                     break;
                 case "9":
-                    about();
+                    performanceSuite();
                     break;
                 case "10":
+                    about();
+                    break;
+                case "11":
                     closeDatabase();
                     System.out.println();
                     System.out.println("Goodbye.");
@@ -85,8 +89,9 @@ public class ConsoleShell{
         System.out.println("6. Health Monitor");
         System.out.println("7. Event Log");
         System.out.println("8. Settings");
-        System.out.println("9. About");
-        System.out.println("10. Exit");
+        System.out.println("9. Performance Suite");
+        System.out.println("10. About");
+        System.out.println("11. Exit");
         System.out.println();
     }
     private void databaseManager(){
@@ -423,6 +428,17 @@ public class ConsoleShell{
             System.out.println();
             System.out.println("Put Entry");
             System.out.println("------------------------------------------------------------");
+            List<String> keys = database.listKeys();
+            System.out.println("Existing Keys");
+            System.out.println("--------------------------------");
+            if(keys.isEmpty()){
+                System.out.println("(none)");
+            } else {
+                for (String k: keys){
+                    System.out.println("• "+k);
+                }
+            }
+            System.out.println();
             System.out.println("Key   :");
             String key = scanner.nextLine().trim();
             System.out.print("Value : ");
@@ -442,6 +458,17 @@ public class ConsoleShell{
             System.out.println();
             System.out.println("Get Entry");
             System.out.println("------------------------------------------------------------");
+            List<String> keys = database.listKeys();
+            System.out.println("Available Keys");
+            System.out.println("--------------------------------");
+            if(keys.isEmpty()){
+                System.out.println("(none)");
+            } else {
+                for(String k: keys){
+                    System.out.println("• "+k);
+                }
+            }
+            System.out.println();
             System.out.print("Key : ");
             String key=scanner.nextLine().trim();
             byte[] value=database.get(key.getBytes(StandardCharsets.UTF_8));
@@ -1063,5 +1090,40 @@ public class ConsoleShell{
         }
 
         return String.format("%.2f ms",nanos/1_000_000.0);
+    }
+    private void performanceSuite(){
+        if(!requireDatabase("Performance Suite")){
+            return;
+        }
+        try{
+            System.out.println();
+            System.out.println("Performance Suite");
+            System.out.println("============================================================");
+            System.out.println("This will execute:");
+            System.out.println(" • PUT Benchmark");
+            System.out.println(" • GET Benchmark");
+            System.out.println(" • Stress Test");
+            System.out.println(" • Large Dataset Test");
+            System.out.println(" • Reliability Test");
+            System.out.println();
+            System.out.print("Continue (Y/N)? ");
+            String answer = scanner.nextLine().trim();
+            if(!answer.equalsIgnoreCase("Y")){
+                return;
+            }
+            PerformanceSuite suite = new PerformanceSuite(database);
+            Path report = suite.runAll();
+            System.out.println();
+            System.out.println("============================================================");
+            System.out.println("Performance Suite Completed Successfully");
+            System.out.println("============================================================");
+            System.out.println("Report saved to:");
+            System.out.println(report.toAbsolutePath());
+        }catch(Exception e){
+            System.out.println();
+            System.out.println("Performance Suite Failed");
+            System.out.println(e.getMessage());
+        }
+        pause();
     }
 }
