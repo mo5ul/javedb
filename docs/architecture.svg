@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 960 560">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#64748B"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="560" rx="18" fill="#F8FAFC"/>
+
+  <text x="480" y="38" font-family="Arial" font-size="28" font-weight="700" text-anchor="middle" fill="#111827">
+    JaveDB Storage Engine
+  </text>
+  <text x="480" y="58" font-family="Arial" font-size="14" text-anchor="middle" fill="#6B7280">
+    LSM-Tree Inspired Embedded Key-Value Database
+  </text>
+
+  <rect x="330" y="90" width="300" height="60" rx="12" fill="#2563EB"/>
+  <text x="480" y="113" font-family="Arial" font-size="16" font-weight="700" text-anchor="middle" fill="#FFFFFF">
+    Interactive CLI
+  </text>
+  <text x="480" y="131" font-family="Arial" font-size="12" text-anchor="middle" fill="#DBEAFE">
+    PUT | GET | DELETE | DASHBOARD
+  </text>
+
+  <line x1="480" y1="150" x2="480" y2="175" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="220" y="175" width="520" height="78" rx="14" fill="#FFFFFF" stroke="#D1D5DB" stroke-width="2"/>
+  <text x="480" y="198" font-family="Arial" font-size="18" font-weight="700" text-anchor="middle" fill="#1F2937">
+    JaveDB Core Engine
+  </text>
+  <text x="480" y="218" font-family="Arial" font-size="12" text-anchor="middle" fill="#6B7280">
+    Database Manager | Query Engine | Runtime Statistics
+  </text>
+  <text x="480" y="234" font-family="Arial" font-size="11" text-anchor="middle" fill="#9CA3AF">
+    Coordinates reads, writes, recovery and observability
+  </text>
+
+  <rect x="40" y="295" width="250" height="105" rx="14" fill="#7C3AED"/>
+  <text x="165" y="320" font-family="Arial" font-size="17" font-weight="700" text-anchor="middle" fill="#FFFFFF">
+    Write-Ahead Log
+  </text>
+  <text x="165" y="340" font-family="Arial" font-size="12" text-anchor="middle" fill="#F3E8FF">
+    Durable persistence
+  </text>
+  <text x="165" y="356" font-family="Arial" font-size="12" text-anchor="middle" fill="#F3E8FF">
+    Crash recovery
+  </text>
+  <text x="165" y="372" font-family="Arial" font-size="12" text-anchor="middle" fill="#F3E8FF">
+    Sequential append log
+  </text>
+
+  <rect x="355" y="295" width="250" height="105" rx="14" fill="#16A34A"/>
+  <text x="480" y="320" font-family="Arial" font-size="17" font-weight="700" text-anchor="middle" fill="#FFFFFF">
+    MemTable
+  </text>
+  <text x="480" y="340" font-family="Arial" font-size="12" text-anchor="middle" fill="#DCFCE7">
+    Sorted in-memory structure
+  </text>
+  <text x="480" y="356" font-family="Arial" font-size="12" text-anchor="middle" fill="#DCFCE7">
+    Fast writes and updates
+  </text>
+  <text x="480" y="372" font-family="Arial" font-size="12" text-anchor="middle" fill="#DCFCE7">
+    Tombstone deletions
+  </text>
+
+  <rect x="670" y="295" width="250" height="105" rx="14" fill="#F59E0B"/>
+  <text x="795" y="320" font-family="Arial" font-size="17" font-weight="700" text-anchor="middle" fill="#FFFFFF">
+    Observability
+  </text>
+  <text x="795" y="340" font-family="Arial" font-size="12" text-anchor="middle" fill="#FEF3C7">
+    Health Monitor
+  </text>
+  <text x="795" y="356" font-family="Arial" font-size="12" text-anchor="middle" fill="#FEF3C7">
+    Event Logging
+  </text>
+  <text x="795" y="372" font-family="Arial" font-size="12" text-anchor="middle" fill="#FEF3C7">
+    Runtime Metrics
+  </text>
+
+  <line x1="480" y1="253" x2="165" y2="295" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="253" x2="480" y2="295" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="253" x2="795" y2="295" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <line x1="480" y1="400" x2="480" y2="430" stroke="#64748B" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#arrow)"/>
+  <rect x="438" y="410" width="84" height="22" rx="11" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="480" y="425" font-family="Arial" font-size="11" font-weight="700" text-anchor="middle" fill="#64748B">
+    FLUSH
+  </text>
+
+  <rect x="140" y="445" width="680" height="82" rx="16" fill="#047857"/>
+  <text x="480" y="472" font-family="Arial" font-size="20" font-weight="700" text-anchor="middle" fill="#FFFFFF">
+    Immutable SSTable Storage
+  </text>
+  <text x="480" y="492" font-family="Arial" font-size="12" text-anchor="middle" fill="#D1FAE5">
+    Sparse Index | Bloom Filter | Binary Search | Automatic Compaction
+  </text>
+  <text x="480" y="508" font-family="Arial" font-size="11" text-anchor="middle" fill="#A7F3D0">
+    Read-optimized persistent storage layer
+  </text>
+</svg>
